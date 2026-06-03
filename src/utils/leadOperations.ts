@@ -19,7 +19,7 @@ export function getAvailableLeadActions(status: LeadStatus): LeadCrmAction[] {
     case 'Scheduled':
       return ['complete_job', 'mark_lost']
     case 'Completed':
-      return []
+      return ['request_review']
     case 'Lost':
       return []
   }
@@ -39,6 +39,8 @@ export function getLeadActionLabel(action: LeadCrmAction): string {
       return 'Complete job'
     case 'mark_lost':
       return 'Mark lost'
+    case 'request_review':
+      return 'Request review'
   }
 }
 
@@ -182,7 +184,49 @@ export function applyLeadAction(lead: Lead, action: LeadCrmAction): LeadActionRe
         }),
       )
       break
+
+    case 'request_review':
+      updatedLead = { ...lead, lastContacted: today }
+      activities.push(
+        createActivity({
+          leadId: lead.id,
+          leadName: lead.name,
+          type: 'review_requested',
+          message: `Google review request sent to ${lead.name} for their recent ${lead.serviceInterest.toLowerCase()}.`,
+        }),
+      )
+      break
   }
+
+  return { updatedLead, activities }
+}
+
+export function moveLeadToStatus(lead: Lead, targetStatus: LeadStatus): LeadActionResult {
+  if (lead.status === targetStatus) {
+    return { updatedLead: lead, activities: [] }
+  }
+
+  const today = todayDate()
+  const fromStatus = lead.status
+
+  const updatedLead: Lead = {
+    ...lead,
+    status: targetStatus,
+    lastContacted: targetStatus === 'New' ? lead.lastContacted : today,
+  }
+
+  const columnLabel = targetStatus === 'Quote Sent' ? 'Quoted' : targetStatus === 'Scheduled' ? 'Booked' : targetStatus
+
+  const activities: Activity[] = [
+    createActivity({
+      leadId: lead.id,
+      leadName: lead.name,
+      type: 'status_changed',
+      message: `${lead.name} moved to ${columnLabel} on the sales pipeline.`,
+      fromStatus,
+      toStatus: targetStatus,
+    }),
+  ]
 
   return { updatedLead, activities }
 }

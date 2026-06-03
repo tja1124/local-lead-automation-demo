@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { LeadCaptureModal } from '../components/LeadCaptureModal'
 import { LeadDetailPanel } from '../components/LeadDetailPanel'
+import { LeadScoreBadge } from '../components/LeadScoreBadge'
+import { PipelineBoard } from '../components/PipelineBoard'
 import { EmptyState, KpiCard, PageHeader, PageShell } from '../components/ui'
 import type { Activity } from '../types/activity'
 import type { FollowUpTask } from '../types/task'
@@ -12,7 +14,10 @@ import type { LeadFormData } from '../utils/leadForm'
 import { isPipelineLead } from '../utils/leadMetrics'
 import { statusBadgeClasses } from '../utils/leadDisplay'
 import { searchLeads } from '../utils/leadSearch'
+import { calculateLeadScore } from '../utils/leadScoring'
 import { getTasksForLead } from '../utils/tasks'
+
+type LeadsViewMode = 'inbox' | 'pipeline'
 
 interface LeadsPageProps {
   leads: Lead[]
@@ -20,8 +25,12 @@ interface LeadsPageProps {
   tasks: FollowUpTask[]
   onAddLead: (formData: LeadFormData) => Lead
   onLeadAction: (leadId: string, action: LeadCrmAction) => Lead | null
+  onMoveLeadStatus: (leadId: string, status: LeadStatus) => Lead | null
   onToggleTask: (taskId: string) => void
   onResetDemoData: () => Lead[]
+  openFormOnMount?: boolean
+  initialView?: LeadsViewMode
+  onMountHandled?: () => void
 }
 
 const STATUS_FILTERS: StatusFilter[] = [
@@ -81,14 +90,25 @@ export function LeadsPage({
   tasks,
   onAddLead,
   onLeadAction,
+  onMoveLeadStatus,
   onToggleTask,
   onResetDemoData,
+  openFormOnMount = false,
+  initialView = 'inbox',
+  onMountHandled,
 }: LeadsPageProps) {
+  const [viewMode, setViewMode] = useState<LeadsViewMode>(initialView)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedLeadId, setSelectedLeadId] = useState(() => leads[0]?.id ?? '')
-  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [isFormOpen, setIsFormOpen] = useState(openFormOnMount)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (openFormOnMount) setIsFormOpen(true)
+    if (initialView !== 'inbox') setViewMode(initialView)
+    onMountHandled?.()
+  }, [])
 
   const visibleLeads = useMemo(
     () => getVisibleLeads(leads, statusFilter, searchQuery),
@@ -96,8 +116,8 @@ export function LeadsPage({
   )
 
   const selectedLead =
-    visibleLeads.find((lead) => lead.id === selectedLeadId) ??
     leads.find((lead) => lead.id === selectedLeadId) ??
+    visibleLeads.find((lead) => lead.id === selectedLeadId) ??
     visibleLeads[0] ??
     null
 
@@ -194,6 +214,19 @@ export function LeadsPage({
         }
       />
 
+      <div className="flex flex-wrap gap-2">
+        <ViewModeButton
+          label="Inbox"
+          active={viewMode === 'inbox'}
+          onClick={() => setViewMode('inbox')}
+        />
+        <ViewModeButton
+          label="Pipeline"
+          active={viewMode === 'pipeline'}
+          onClick={() => setViewMode('pipeline')}
+        />
+      </div>
+
       {successMessage && (
         <div
           role="status"
@@ -216,6 +249,37 @@ export function LeadsPage({
       </div>
 
       <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm">
+        {viewMode === 'pipeline' ? (
+          <div className="flex flex-col xl:flex-row xl:items-start">
+            <div className="min-w-0 flex-1 border-b border-slate-100 p-3 sm:p-4 xl:max-h-[calc(100vh-8rem)] xl:overflow-y-auto xl:border-b-0 xl:border-r">
+              <PipelineBoard
+                leads={leads}
+                activities={activities}
+                tasks={tasks}
+                selectedLeadId={selectedLeadId}
+                onSelectLead={handleSelectLead}
+                onMoveLead={onMoveLeadStatus}
+              />
+            </div>
+            <aside className="w-full shrink-0 xl:sticky xl:top-20 xl:w-[22rem] xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto 2xl:w-96">
+              {selectedLead ? (
+                <LeadDetailPanel
+                  lead={selectedLead}
+                  activities={selectedLeadActivities}
+                  tasks={selectedLeadTasks}
+                  onLeadAction={(action) => onLeadAction(selectedLead.id, action)}
+                  onToggleTask={onToggleTask}
+                />
+              ) : (
+                <EmptyState
+                  title="Select a pipeline card"
+                  description="Choose a lead from the board to view details and take action."
+                />
+              )}
+            </aside>
+          </div>
+        ) : (
+          <>
         <div className="border-b border-slate-100 p-4 sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0 flex-1">
@@ -332,6 +396,10 @@ export function LeadsPage({
                               </span>
                             )}
                             <StatusBadge status={lead.status} />
+                            <LeadScoreBadge
+                              score={calculateLeadScore(lead, activities, tasks)}
+                              compact
+                            />
                           </div>
                           <p className="mt-1 truncate text-sm text-slate-500">
                             {lead.vehicle} · {lead.serviceInterest}
@@ -369,6 +437,8 @@ export function LeadsPage({
             )}
           </aside>
         </div>
+          </>
+        )}
       </section>
 
       <LeadCaptureModal
@@ -377,6 +447,30 @@ export function LeadsPage({
         onSubmit={handleAddLead}
       />
     </PageShell>
+  )
+}
+
+function ViewModeButton({
+  label,
+  active,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+        active
+          ? 'bg-brand-600 text-white shadow-sm'
+          : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
+      }`}
+    >
+      {label}
+    </button>
   )
 }
 

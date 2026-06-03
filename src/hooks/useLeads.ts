@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Activity } from '../types/activity'
-import type { Lead } from '../types/lead'
+import type { Lead, LeadStatus } from '../types/lead'
 import type { LeadCrmAction } from '../types/leadOperations'
 import {
   createActivity,
@@ -13,7 +13,7 @@ import {
   saveActivitiesToStorage,
 } from '../utils/activityStorage'
 import { createLeadFromForm, type LeadFormData } from '../utils/leadForm'
-import { applyLeadAction } from '../utils/leadOperations'
+import { applyLeadAction, moveLeadToStatus } from '../utils/leadOperations'
 import {
   clearLeadsStorage,
   getDefaultLeads,
@@ -102,6 +102,26 @@ export function useLeads() {
     [leads],
   )
 
+  const moveLeadStatus = useCallback(
+    (leadId: string, targetStatus: LeadStatus): Lead | null => {
+      const lead = leads.find((entry) => entry.id === leadId)
+      if (!lead) return null
+
+      const result = moveLeadToStatus(lead, targetStatus)
+      if (result.activities.length === 0) return lead
+
+      setLeads((currentLeads) =>
+        currentLeads.map((entry) => (entry.id === leadId ? result.updatedLead : entry)),
+      )
+      setActivities((currentActivities) =>
+        sortActivitiesNewestFirst([...result.activities, ...currentActivities]),
+      )
+
+      return result.updatedLead
+    },
+    [leads],
+  )
+
   const toggleTaskComplete = useCallback((taskId: string) => {
     setTaskCompletions((current) => {
       const existing = current[taskId]
@@ -135,6 +155,7 @@ export function useLeads() {
     tasks,
     addLeadFromForm,
     performLeadAction,
+    moveLeadStatus,
     toggleTaskComplete,
     resetDemoData,
   }

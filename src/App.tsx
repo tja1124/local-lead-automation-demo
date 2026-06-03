@@ -8,23 +8,45 @@ import { AutomationsPage } from './pages/AutomationsPage'
 import { ReviewsPage } from './pages/ReviewsPage'
 import { ReportsPage } from './pages/ReportsPage'
 
+interface LeadsNavigationOptions {
+  openForm?: boolean
+  view?: 'inbox' | 'pipeline'
+}
+
 export default function App() {
   const [activePage, setActivePage] = useState<PageId>('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [leadsOpenForm, setLeadsOpenForm] = useState(false)
+  const [leadsInitialView, setLeadsInitialView] = useState<'inbox' | 'pipeline'>('inbox')
   const {
     leads,
     activities,
     tasks,
     addLeadFromForm,
     performLeadAction,
+    moveLeadStatus,
     toggleTaskComplete,
     resetDemoData,
   } = useLeads()
 
+  const navigateToLeads = (options?: LeadsNavigationOptions) => {
+    setLeadsOpenForm(Boolean(options?.openForm))
+    setLeadsInitialView(options?.view ?? 'inbox')
+    setActivePage('leads')
+  }
+
   const renderPage = (pageId: PageId) => {
     switch (pageId) {
       case 'dashboard':
-        return <DashboardPage leads={leads} activities={activities} tasks={tasks} />
+        return (
+          <DashboardPage
+            leads={leads}
+            activities={activities}
+            tasks={tasks}
+            onNavigateToLeads={navigateToLeads}
+            onLeadAction={performLeadAction}
+          />
+        )
       case 'leads':
         return (
           <LeadsPage
@@ -33,8 +55,15 @@ export default function App() {
             tasks={tasks}
             onAddLead={addLeadFromForm}
             onLeadAction={performLeadAction}
+            onMoveLeadStatus={moveLeadStatus}
             onToggleTask={toggleTaskComplete}
             onResetDemoData={resetDemoData}
+            openFormOnMount={leadsOpenForm}
+            initialView={leadsInitialView}
+            onMountHandled={() => {
+              setLeadsOpenForm(false)
+              setLeadsInitialView('inbox')
+            }}
           />
         )
       case 'automations':

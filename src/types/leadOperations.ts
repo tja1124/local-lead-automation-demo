@@ -5,3 +5,4 @@ export type LeadCrmAction =
   | 'mark_booked'
   | 'complete_job'
   | 'mark_lost'
+  | 'request_review'

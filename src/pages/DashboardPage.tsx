@@ -2,7 +2,14 @@ import { businessName } from '../data/navigation'
 import type { Activity } from '../types/activity'
 import type { FollowUpTask } from '../types/task'
 import type { Lead, LeadStatus } from '../types/lead'
+import type { LeadCrmAction } from '../types/leadOperations'
 import { ActivityTimeline } from '../components/LeadOperations'
+import { OperationsInsights } from '../components/OperationsInsights'
+import {
+  buildDashboardQuickActions,
+  QuickActionsBar,
+  type QuickAction,
+} from '../components/QuickActionsBar'
 import {
   DemoNotice,
   EmptyState,
@@ -12,6 +19,7 @@ import {
   SectionCard,
 } from '../components/ui'
 import { formatCurrency, formatDate } from '../utils/format'
+import { generateBusinessInsights } from '../utils/businessInsights'
 import {
   getNeedsAttentionItems,
   getRecentCrmActivity,
@@ -29,11 +37,16 @@ import {
   getPipelineValue,
   getRecentLeads,
 } from '../utils/leadMetrics'
+import { getAvailableLeadActions } from '../utils/leadOperations'
+import { getPipelineHealthScore } from '../utils/pipeline'
+import { calculateLeadScore, summarizeLeadScores } from '../utils/leadScoring'
 
 interface DashboardPageProps {
   leads: Lead[]
   activities: Activity[]
   tasks: FollowUpTask[]
+  onNavigateToLeads: (options?: { openForm?: boolean; view?: 'inbox' | 'pipeline' }) => void
+  onLeadAction: (leadId: string, action: LeadCrmAction) => Lead | null
 }
 
 const PIPELINE_STATUSES: LeadStatus[] = [
@@ -55,7 +68,17 @@ function StatusBadge({ status }: { status: LeadStatus }) {
   )
 }
 
-export function DashboardPage({ leads, activities, tasks }: DashboardPageProps) {
+function findLeadForAction(leads: Lead[], action: LeadCrmAction): Lead | null {
+  return leads.find((lead) => getAvailableLeadActions(lead.status).includes(action)) ?? null
+}
+
+export function DashboardPage({
+  leads,
+  activities,
+  tasks,
+  onNavigateToLeads,
+  onLeadAction,
+}: DashboardPageProps) {
   const totalLeads = leads.length
   const statusCounts = countByStatus(leads)
   const newLeads = statusCounts.New
@@ -72,6 +95,27 @@ export function DashboardPage({ leads, activities, tasks }: DashboardPageProps) 
   const recentCrmActivity = getRecentCrmActivity(activities)
   const needsAttention = getNeedsAttentionItems(leads, tasks)
   const winRate = totalLeads > 0 ? Math.round(((totalLeads - lostLeads) / totalLeads) * 100) : 0
+  const scoreSummary = summarizeLeadScores(leads, activities, tasks)
+  const pipelineHealth = getPipelineHealthScore(leads)
+  const insights = generateBusinessInsights(leads, activities, tasks)
+  const quickActions = buildDashboardQuickActions()
+
+  const handleQuickAction = (item: QuickAction) => {
+    if (item.id === 'add-lead') {
+      onNavigateToLeads({ openForm: true })
+      return
+    }
+
+    if (item.action) {
+      const lead = findLeadForAction(leads, item.action)
+      if (lead) {
+        onLeadAction(lead.id, item.action)
+        return
+      }
+    }
+
+    onNavigateToLeads()
+  }
 
   return (
     <PageShell>
@@ -84,7 +128,13 @@ export function DashboardPage({ leads, activities, tasks }: DashboardPageProps) 
 
       <DemoNotice />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <SectionCard title="Quick actions" description="Common CRM workflows for daily operations.">
+        <div className="list-row">
+          <QuickActionsBar actions={quickActions} onAction={handleQuickAction} />
+        </div>
+      </SectionCard>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
         <KpiCard label="Total leads" value={String(totalLeads)} compact />
         <KpiCard label="New leads" value={String(newLeads)} valueClassName="text-blue-600" compact />
         <KpiCard
@@ -101,6 +151,25 @@ export function DashboardPage({ leads, activities, tasks }: DashboardPageProps) 
           compact
         />
         <KpiCard label="Win rate" value={`${winRate}%`} valueClassName="text-brand-600" compact />
+        <KpiCard
+          label="Avg. lead score"
+          value={String(scoreSummary.avgScore)}
+          valueClassName="text-amber-600"
+          compact
+        />
+        <KpiCard
+          label="Pipeline health"
+          value={`${pipelineHealth}%`}
+          valueClassName={pipelineHealth >= 70 ? 'text-emerald-600' : 'text-amber-600'}
+          compact
+        />
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">
+          Operations insights
+        </h3>
+        <OperationsInsights insights={insights} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -138,7 +207,16 @@ export function DashboardPage({ leads, activities, tasks }: DashboardPageProps) 
             <SummaryRow label="Open pipeline" value={formatCurrency(pipelineValue)} />
             <SummaryRow label="Follow-ups due" value={String(followUpCount)} />
             <SummaryRow label="Win rate" value={`${winRate}%`} />
+            <SummaryRow label="Hot leads" value={String(scoreSummary.hotCount)} />
+            <SummaryRow label="Warm leads" value={String(scoreSummary.warmCount)} />
           </dl>
+          <button
+            type="button"
+            onClick={() => onNavigateToLeads({ view: 'pipeline' })}
+            className="btn-secondary mt-4 w-full text-xs sm:text-sm"
+          >
+            Open pipeline board
+          </button>
         </section>
       </div>
 
@@ -225,7 +303,10 @@ export function DashboardPage({ leads, activities, tasks }: DashboardPageProps) 
                     </div>
                     <div className="shrink-0 text-right">
                       <StatusBadge status={lead.status} />
-                      <p className="mt-1.5 text-sm font-semibold text-slate-900">
+                      <p className="mt-1 text-xs font-medium text-amber-700">
+                        Score {calculateLeadScore(lead, activities, tasks)}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-slate-900">
                         {formatCurrency(lead.estimatedValue)}
                       </p>
                     </div>

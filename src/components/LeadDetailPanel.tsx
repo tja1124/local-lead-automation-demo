@@ -4,8 +4,10 @@ import type { Lead, LeadPriority, LeadStatus } from '../types/lead'
 import type { LeadCrmAction } from '../types/leadOperations'
 import { ActivityTimeline, LeadActionButtons } from './LeadOperations'
 import { FollowUpTasksList } from './FollowUpTasksList'
+import { LeadScoreBadge } from './LeadScoreBadge'
 import { DetailSection } from './ui'
 import { getRecommendedNextAction } from '../utils/leadActions'
+import { buildCustomerProfile } from '../utils/customerProfile'
 import { formatCurrency, formatDate } from '../utils/format'
 import { statusBadgeClasses } from '../utils/leadDisplay'
 
@@ -50,6 +52,7 @@ export function LeadDetailPanel({
 }: LeadDetailPanelProps) {
   const isHighPriority = lead.priority === 'High'
   const nextAction = getRecommendedNextAction(lead.status)
+  const profile = buildCustomerProfile(lead, activities, tasks)
 
   return (
     <div
@@ -59,6 +62,7 @@ export function LeadDetailPanel({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-semibold text-slate-900">{lead.name}</h3>
+            <LeadScoreBadge score={profile.leadScore} />
             {isHighPriority && (
               <span className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-600 ring-1 ring-red-200 ring-inset">
                 High priority
@@ -70,6 +74,34 @@ export function LeadDetailPanel({
         </div>
         <StatusBadge status={lead.status} />
       </div>
+
+      <DetailSection title="Customer profile" variant="highlight">
+        <dl className="space-y-2.5 text-sm">
+          <DetailRow label="Est. lifetime value">
+            <span className="font-semibold text-slate-900">
+              {formatCurrency(profile.estimatedLifetimeValue)}
+            </span>
+          </DetailRow>
+          <DetailRow label="Total interactions">{profile.totalInteractions}</DetailRow>
+          <DetailRow label="Preferred service">{profile.preferredService}</DetailRow>
+          <DetailRow label="Days in pipeline">{profile.daysInPipeline}</DetailRow>
+          <DetailRow label="Last contact">
+            {profile.lastContactDate ? formatDate(profile.lastContactDate) : 'Not yet contacted'}
+          </DetailRow>
+        </dl>
+        {profile.customerTags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {profile.customerTags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </DetailSection>
 
       <DetailSection title="Quick actions">
         <LeadActionButtons status={lead.status} onAction={onLeadAction} />
@@ -102,14 +134,14 @@ export function LeadDetailPanel({
               {formatCurrency(lead.estimatedValue)}
             </span>
           </DetailRow>
+          <DetailRow label="Lead score">
+            <LeadScoreBadge score={profile.leadScore} />
+          </DetailRow>
           <DetailRow label="Priority">
             <PriorityIndicator priority={lead.priority} />
           </DetailRow>
           <DetailRow label="Source">{lead.source}</DetailRow>
           <DetailRow label="Requested">{formatDate(lead.requestedDate)}</DetailRow>
-          <DetailRow label="Last contacted">
-            {lead.lastContacted ? formatDate(lead.lastContacted) : 'Not yet contacted'}
-          </DetailRow>
           <DetailRow label="Phone">
             <a href={`tel:${lead.phone}`} className="text-brand-600 hover:text-brand-700">
               {lead.phone}
