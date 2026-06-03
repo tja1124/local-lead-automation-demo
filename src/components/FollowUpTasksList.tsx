@@ -38,7 +38,7 @@ export function FollowUpTasksList({
         return (
           <li
             key={task.id}
-            className="flex items-start gap-3 rounded-lg border border-slate-100 bg-white px-3 py-2.5"
+            className="flex items-start gap-3 rounded-lg border border-slate-100 bg-white px-3 py-2.5 transition-colors duration-150 hover:border-slate-200 hover:bg-slate-50/50"
           >
             <input
               type="checkbox"

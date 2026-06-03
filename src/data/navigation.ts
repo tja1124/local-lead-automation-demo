@@ -4,27 +4,27 @@ export const navItems: NavItem[] = [
   {
     id: 'dashboard',
     label: 'Dashboard',
-    description: 'Overview of your lead pipeline and activity',
+    description: 'Business health, priorities, and revenue opportunities',
   },
   {
     id: 'leads',
     label: 'Leads',
-    description: 'Manage incoming and active customer leads',
+    description: 'Inbox, pipeline board, and CRM actions',
   },
   {
     id: 'automations',
     label: 'Automations',
-    description: 'Configure follow-up workflows and triggers',
+    description: 'Simulated follow-up workflows and triggers',
   },
   {
     id: 'reviews',
     label: 'Reviews',
-    description: 'Track and respond to customer reviews',
+    description: 'Google review requests and reputation tracking',
   },
   {
     id: 'reports',
     label: 'Reports',
-    description: 'Analyze performance and conversion metrics',
+    description: 'Pipeline, source, and service performance',
   },
 ]
 

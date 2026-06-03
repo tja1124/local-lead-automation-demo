@@ -69,7 +69,7 @@ export function ReportsPage({ leads }: ReportsPageProps) {
       <PageHeader
         label="Reporting center"
         title="Business performance reports"
-        subtitle="Simulated local reports computed from your current lead pipeline."
+        subtitle="Pipeline, source, and service analytics derived from your lead data."
         showDemoBadge
       />
 

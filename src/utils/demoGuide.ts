@@ -16,6 +16,14 @@ export function dismissDemoGuide(): void {
   }
 }
 
+export function resetDemoGuide(): void {
+  try {
+    localStorage.removeItem(DEMO_GUIDE_KEY)
+  } catch {
+    // ignore storage errors in demo mode
+  }
+}
+
 export const DEMO_WALKTHROUGH_STEPS = [
   {
     step: 1,

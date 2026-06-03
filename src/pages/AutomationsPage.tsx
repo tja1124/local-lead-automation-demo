@@ -32,7 +32,7 @@ export function AutomationsPage({ leads }: AutomationsPageProps) {
       <PageHeader
         label="Automation center"
         title="Follow-up workflows"
-        subtitle="Simulated SMS and notification automations. No messages are actually sent."
+        subtitle="Pre-built follow-up workflows that respond to lead status — simulated for demo purposes."
         showDemoBadge
       />
 

@@ -38,7 +38,7 @@ export function ReviewsPage({ leads }: ReviewsPageProps) {
       <PageHeader
         label="Reputation center"
         title="Review requests"
-        subtitle="Simulated Google review tracking for Apex Auto Detailing. No messages are actually sent."
+        subtitle="Track review requests and reputation metrics from completed jobs — simulated locally."
         showDemoBadge
       />
 

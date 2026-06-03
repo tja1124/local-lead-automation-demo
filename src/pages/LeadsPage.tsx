@@ -17,6 +17,7 @@ import { statusBadgeClasses } from '../utils/leadDisplay'
 import { searchLeads } from '../utils/leadSearch'
 import { calculateLeadScore } from '../utils/leadScoring'
 import { formatLeadAge, getLeadUrgency } from '../utils/leadUrgency'
+import { resetDemoGuide } from '../utils/demoGuide'
 import { getTasksForLead } from '../utils/tasks'
 
 type LeadsViewMode = 'inbox' | 'pipeline'
@@ -187,6 +188,7 @@ export function LeadsPage({
     if (!confirmed) return
 
     const restored = onResetDemoData()
+    resetDemoGuide()
     setStatusFilter('All')
     setSearchQuery('')
     setSelectedLeadId(restored[0]?.id ?? '')
@@ -216,8 +218,8 @@ export function LeadsPage({
         }
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
+        <div className="flex flex-wrap gap-2 lg:shrink-0">
           <ViewModeButton
             label="Inbox"
             active={viewMode === 'inbox'}
@@ -230,11 +232,11 @@ export function LeadsPage({
           />
         </div>
         {viewMode === 'inbox' ? (
-          <WorkflowHint>
+          <WorkflowHint className="lg:flex-1">
             Select a lead to view profile, take CRM actions, and complete follow-up tasks.
           </WorkflowHint>
         ) : (
-          <WorkflowHint>
+          <WorkflowHint className="lg:flex-1">
             Drag cards between stages or use arrows — changes sync across Dashboard and Reports.
           </WorkflowHint>
         )}

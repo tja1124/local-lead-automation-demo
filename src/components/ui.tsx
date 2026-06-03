@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
+import { DEMO_WALKTHROUGH_STEPS } from '../utils/demoGuide'
 
 export function PageShell({ children }: { children: ReactNode }) {
-  return <div className="mx-auto max-w-7xl space-y-5">{children}</div>
+  return <div className="mx-auto max-w-7xl space-y-5 sm:space-y-6">{children}</div>
 }
 
 export function PageHeader({
@@ -19,7 +20,7 @@ export function PageHeader({
 }) {
   return (
     <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-medium text-brand-600">{label}</p>
           {showDemoBadge && <DemoBadge />}
@@ -47,8 +48,8 @@ export function DemoBadge({
 export function DemoNotice() {
   return (
     <p className="rounded-lg border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs leading-relaxed text-slate-500 shadow-sm">
-      All metrics and CRM activity are computed locally. No SMS, email, or external APIs are
-      used in this demo.
+      Simulated CRM — all metrics and activity are computed locally in your browser. No external
+      APIs or messaging services are used.
     </p>
   )
 }
@@ -68,9 +69,17 @@ export function SectionLabel({
   )
 }
 
-export function WorkflowHint({ children }: { children: React.ReactNode }) {
+export function WorkflowHint({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
   return (
-    <p className="rounded-lg border border-slate-200/80 bg-slate-50/80 px-3.5 py-2.5 text-xs leading-relaxed text-slate-600">
+    <p
+      className={`min-w-0 rounded-lg border border-slate-200/80 bg-slate-50/80 px-3.5 py-2.5 text-xs leading-relaxed text-slate-600 ${className}`}
+    >
       {children}
     </p>
   )
@@ -82,7 +91,7 @@ export function DemoGuideBanner({
   onDismiss: () => void
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-brand-200/60 bg-gradient-to-br from-brand-50/80 to-white shadow-sm">
+    <section className="overflow-hidden rounded-xl border border-brand-200/60 border-l-4 border-l-brand-500 bg-gradient-to-br from-brand-50/80 to-white shadow-sm">
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
@@ -95,18 +104,17 @@ export function DemoGuideBanner({
             This portfolio demo simulates a complete CRM for Apex Auto Detailing — from first
             inquiry to booked detail and review request. All data stays in your browser.
           </p>
-          <ol className="mt-4 grid gap-2 sm:grid-cols-2">
-            {[
-              'Review priorities on the Dashboard',
-              'Manage leads in Inbox or Pipeline',
-              'Use quick actions to advance deals',
-              'Track results in Reports & Reviews',
-            ].map((step, index) => (
-              <li key={step} className="flex items-start gap-2 text-xs text-slate-600 sm:text-sm">
+          <ol className="mt-4 grid gap-2.5 sm:grid-cols-2">
+            {DEMO_WALKTHROUGH_STEPS.map((step) => (
+              <li key={step.step} className="flex items-start gap-2.5 text-xs sm:text-sm">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700">
-                  {index + 1}
+                  {step.step}
                 </span>
-                {step}
+                <span className="min-w-0 text-slate-600">
+                  <span className="font-medium text-slate-800">{step.title}</span>
+                  {' — '}
+                  {step.detail}
+                </span>
               </li>
             ))}
           </ol>
@@ -141,7 +149,7 @@ export function KpiCard({
         {label}
       </p>
       <p
-        className={`mt-1.5 font-semibold ${compact ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'} ${valueClassName}`}
+        className={`mt-1.5 truncate font-semibold ${compact ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'} ${valueClassName}`}
       >
         {value}
       </p>
@@ -183,10 +191,22 @@ export function EmptyState({
   description?: string
 }) {
   return (
-    <div className="px-4 py-8 text-center sm:px-5">
-      <p className="text-sm font-medium text-slate-700">{title}</p>
+    <div className="px-4 py-10 text-center sm:px-5">
+      <div
+        className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400"
+        aria-hidden="true"
+      >
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5a1.125 1.125 0 00-1.125-1.125H3.375a1.125 1.125 0 00-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"
+          />
+        </svg>
+      </div>
+      <p className="mt-3 text-sm font-medium text-slate-700">{title}</p>
       {description && (
-        <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-slate-500">
+        <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-slate-500">
           {description}
         </p>
       )}
@@ -216,8 +236,4 @@ export function DetailSection({
       <div className="mt-3">{children}</div>
     </section>
   )
-}
-
-export function SectionDivider() {
-  return <div className="border-t border-slate-100" />
 }
