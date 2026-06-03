@@ -38,7 +38,7 @@ export function LeadActionButtons({ status, onAction }: LeadActionButtonsProps) 
             key={action}
             type="button"
             onClick={() => onAction(action)}
-            className="btn-secondary text-xs sm:text-sm"
+            className="btn-secondary text-xs sm:text-sm transition-all duration-150 active:scale-[0.98]"
           >
             {getLeadActionLabel(action)}
           </button>

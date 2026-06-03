@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { LeadCaptureModal } from '../components/LeadCaptureModal'
 import { LeadDetailPanel } from '../components/LeadDetailPanel'
 import { LeadScoreBadge } from '../components/LeadScoreBadge'
+import { LeadUrgencyBadge } from '../components/LeadUrgencyBadge'
 import { PipelineBoard } from '../components/PipelineBoard'
-import { EmptyState, KpiCard, PageHeader, PageShell } from '../components/ui'
+import { EmptyState, KpiCard, PageHeader, PageShell, WorkflowHint } from '../components/ui'
 import type { Activity } from '../types/activity'
 import type { FollowUpTask } from '../types/task'
 import type { Lead, LeadPriority, LeadStatus, StatusFilter } from '../types/lead'
@@ -15,6 +16,7 @@ import { isPipelineLead } from '../utils/leadMetrics'
 import { statusBadgeClasses } from '../utils/leadDisplay'
 import { searchLeads } from '../utils/leadSearch'
 import { calculateLeadScore } from '../utils/leadScoring'
+import { formatLeadAge, getLeadUrgency } from '../utils/leadUrgency'
 import { getTasksForLead } from '../utils/tasks'
 
 type LeadsViewMode = 'inbox' | 'pipeline'
@@ -198,7 +200,7 @@ export function LeadsPage({
       <PageHeader
         label="Lead inbox"
         title="Manage customer inquiries"
-        subtitle="Track quote requests, follow-ups, and bookings for Apex Auto Detailing."
+        subtitle="Capture inquiries, follow up fast, and move deals through your pipeline — inbox for detail work, pipeline for visual stage management."
         actions={
           <>
             <button type="button" onClick={handleResetDemoData} className="btn-secondary">
@@ -214,17 +216,28 @@ export function LeadsPage({
         }
       />
 
-      <div className="flex flex-wrap gap-2">
-        <ViewModeButton
-          label="Inbox"
-          active={viewMode === 'inbox'}
-          onClick={() => setViewMode('inbox')}
-        />
-        <ViewModeButton
-          label="Pipeline"
-          active={viewMode === 'pipeline'}
-          onClick={() => setViewMode('pipeline')}
-        />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-2">
+          <ViewModeButton
+            label="Inbox"
+            active={viewMode === 'inbox'}
+            onClick={() => setViewMode('inbox')}
+          />
+          <ViewModeButton
+            label="Pipeline"
+            active={viewMode === 'pipeline'}
+            onClick={() => setViewMode('pipeline')}
+          />
+        </div>
+        {viewMode === 'inbox' ? (
+          <WorkflowHint>
+            Select a lead to view profile, take CRM actions, and complete follow-up tasks.
+          </WorkflowHint>
+        ) : (
+          <WorkflowHint>
+            Drag cards between stages or use arrows — changes sync across Dashboard and Reports.
+          </WorkflowHint>
+        )}
       </div>
 
       {successMessage && (
@@ -374,14 +387,16 @@ export function LeadsPage({
                 {visibleLeads.map((lead) => {
                   const isSelected = selectedLead?.id === lead.id
                   const isHighPriority = lead.priority === 'High'
+                  const score = calculateLeadScore(lead, activities, tasks)
+                  const urgency = getLeadUrgency(lead, tasks, score)
                   return (
                     <li key={lead.id}>
                       <button
                         type="button"
                         onClick={() => handleSelectLead(lead.id)}
-                        className={`flex w-full flex-col gap-2 border-l-2 px-4 py-4 text-left transition-colors sm:flex-row sm:items-center sm:justify-between sm:px-5 ${
+                        className={`flex w-full flex-col gap-2 border-l-2 px-4 py-4 text-left transition-all duration-150 sm:flex-row sm:items-center sm:justify-between sm:px-5 ${
                           isSelected
-                            ? 'border-l-brand-600 bg-brand-50/60'
+                            ? 'border-l-brand-600 bg-brand-50/60 shadow-sm'
                             : isHighPriority
                               ? 'border-l-red-400 hover:bg-red-50/30'
                               : 'border-l-transparent hover:bg-slate-50'
@@ -390,21 +405,21 @@ export function LeadsPage({
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-medium text-slate-900">{lead.name}</p>
+                            {urgency && <LeadUrgencyBadge urgency={urgency} compact />}
                             {isHighPriority && (
                               <span className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-600 ring-1 ring-red-200 ring-inset">
                                 High
                               </span>
                             )}
                             <StatusBadge status={lead.status} />
-                            <LeadScoreBadge
-                              score={calculateLeadScore(lead, activities, tasks)}
-                              compact
-                            />
+                            <LeadScoreBadge score={score} compact />
                           </div>
                           <p className="mt-1 truncate text-sm text-slate-500">
                             {lead.vehicle} · {lead.serviceInterest}
                           </p>
-                          <p className="mt-0.5 text-xs text-slate-400">{lead.source}</p>
+                          <p className="mt-0.5 text-xs text-slate-400">
+                            {lead.source} · {formatLeadAge(lead)} in pipeline
+                          </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-4 sm:flex-col sm:items-end sm:gap-1">
                           <p className="text-sm font-semibold text-slate-900">
@@ -463,10 +478,10 @@ function ViewModeButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 active:scale-[0.98] ${
         active
           ? 'bg-brand-600 text-white shadow-sm'
-          : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
+          : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 hover:text-slate-900'
       }`}
     >
       {label}

@@ -38,7 +38,7 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wider text-slate-400">
-            Menu
+            Workspace
           </p>
           <ul className="space-y-1">
             {navItems.map((item) => {
@@ -48,9 +48,9 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
                   <button
                     type="button"
                     onClick={() => onNavigate(item.id)}
-                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-150 active:scale-[0.99] ${
                       isActive
-                        ? 'bg-brand-50 text-brand-700'
+                        ? 'bg-brand-50 text-brand-700 shadow-sm'
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                     }`}
                   >
@@ -67,9 +67,9 @@ export function Sidebar({ activePage, onNavigate, isOpen, onClose }: SidebarProp
 
         <div className="border-t border-slate-200 p-4">
           <div className="rounded-lg border border-slate-200/80 bg-slate-50 px-3 py-2.5">
-            <p className="text-xs font-medium text-slate-700">Local demo mode</p>
+            <p className="text-xs font-medium text-slate-700">Portfolio demo</p>
             <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
-              Data persists in your browser. No real messages sent.
+              Explore the full workflow — leads, pipeline, reports, and reviews. Data saves locally.
             </p>
           </div>
         </div>

@@ -53,6 +53,77 @@ export function DemoNotice() {
   )
 }
 
+export function SectionLabel({
+  title,
+  description,
+}: {
+  title: string
+  description?: string
+}) {
+  return (
+    <div className="mb-3">
+      <h3 className="text-sm font-semibold text-slate-900 sm:text-base">{title}</h3>
+      {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
+    </div>
+  )
+}
+
+export function WorkflowHint({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="rounded-lg border border-slate-200/80 bg-slate-50/80 px-3.5 py-2.5 text-xs leading-relaxed text-slate-600">
+      {children}
+    </p>
+  )
+}
+
+export function DemoGuideBanner({
+  onDismiss,
+}: {
+  onDismiss: () => void
+}) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-brand-200/60 bg-gradient-to-br from-brand-50/80 to-white shadow-sm">
+      <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
+            Demo walkthrough
+          </p>
+          <h3 className="mt-1 text-base font-semibold text-slate-900 sm:text-lg">
+            LeadFlow helps local businesses capture, follow up, and close more jobs
+          </h3>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+            This portfolio demo simulates a complete CRM for Apex Auto Detailing — from first
+            inquiry to booked detail and review request. All data stays in your browser.
+          </p>
+          <ol className="mt-4 grid gap-2 sm:grid-cols-2">
+            {[
+              'Review priorities on the Dashboard',
+              'Manage leads in Inbox or Pipeline',
+              'Use quick actions to advance deals',
+              'Track results in Reports & Reviews',
+            ].map((step, index) => (
+              <li key={step} className="flex items-start gap-2 text-xs text-slate-600 sm:text-sm">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700">
+                  {index + 1}
+                </span>
+                {step}
+              </li>
+            ))}
+          </ol>
+        </div>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="btn-secondary shrink-0 self-start text-xs"
+          aria-label="Dismiss demo guide"
+        >
+          Got it
+        </button>
+      </div>
+    </section>
+  )
+}
+
 export function KpiCard({
   label,
   value,

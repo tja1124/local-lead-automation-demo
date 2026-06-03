@@ -5,10 +5,12 @@ import type { LeadCrmAction } from '../types/leadOperations'
 import { ActivityTimeline, LeadActionButtons } from './LeadOperations'
 import { FollowUpTasksList } from './FollowUpTasksList'
 import { LeadScoreBadge } from './LeadScoreBadge'
+import { LeadUrgencyBadge } from './LeadUrgencyBadge'
 import { DetailSection } from './ui'
 import { getRecommendedNextAction } from '../utils/leadActions'
 import { buildCustomerProfile } from '../utils/customerProfile'
 import { formatCurrency, formatDate } from '../utils/format'
+import { formatLeadAge, getLeadUrgency } from '../utils/leadUrgency'
 import { statusBadgeClasses } from '../utils/leadDisplay'
 
 interface LeadDetailPanelProps {
@@ -53,6 +55,7 @@ export function LeadDetailPanel({
   const isHighPriority = lead.priority === 'High'
   const nextAction = getRecommendedNextAction(lead.status)
   const profile = buildCustomerProfile(lead, activities, tasks)
+  const urgency = getLeadUrgency(lead, tasks, profile.leadScore)
 
   return (
     <div
@@ -63,6 +66,7 @@ export function LeadDetailPanel({
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-semibold text-slate-900">{lead.name}</h3>
             <LeadScoreBadge score={profile.leadScore} />
+            {urgency && <LeadUrgencyBadge urgency={urgency} />}
             {isHighPriority && (
               <span className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-600 ring-1 ring-red-200 ring-inset">
                 High priority
@@ -70,7 +74,9 @@ export function LeadDetailPanel({
             )}
           </div>
           <p className="mt-0.5 text-sm text-slate-500">{lead.vehicle}</p>
-          <p className="mt-1 text-xs text-slate-400">{lead.serviceInterest}</p>
+          <p className="mt-1 text-xs text-slate-400">
+            {lead.serviceInterest} · {formatLeadAge(lead)} in pipeline
+          </p>
         </div>
         <StatusBadge status={lead.status} />
       </div>
